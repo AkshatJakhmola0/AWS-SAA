@@ -1,11 +1,14 @@
-# 🔐 IAM and AWS CLI
+# 🔐 IAM & AWS CLI
 
-This section documents my learning and hands-on practice with **AWS Identity and Access Management (IAM)** and the **AWS Command Line Interface (CLI)** while preparing for the **AWS Certified Solutions Architect – Associate (SAA-C03)**.
+This section documents my learning and hands-on practice with **AWS Identity and Access Management (IAM)**, **AWS CLI**, **AWS CloudShell**, IAM Roles, and IAM security tools while preparing for the **AWS Certified Solutions Architect – Associate (SAA-C03)**.
+
+The main focus of this section is understanding how AWS manages **identities, authentication, authorization, permissions, and secure access to AWS resources**.
 
 ---
 
 ## 📚 Topics Covered
 
+* IAM Introduction
 * IAM Users
 * IAM Groups
 * IAM Policies
@@ -14,74 +17,103 @@ This section documents my learning and hands-on practice with **AWS Identity and
 * AWS Access Keys
 * AWS CLI
 * AWS SDK
-* AWS CLI Configuration
-* Hands-on IAM and CLI practice
+* AWS CloudShell
+* IAM Roles for AWS Services
+* IAM Security Tools
+* IAM Best Practices
+* Principle of Least Privilege
 
 ---
 
-# 👤 AWS IAM
+# 🧠 What is AWS IAM?
 
-**AWS Identity and Access Management (IAM)** is used to control authentication and authorization for AWS resources.
+**AWS Identity and Access Management (IAM)** is an AWS service used to securely control access to AWS resources.
 
-IAM helps answer two important questions:
+IAM helps determine:
 
-* **Who can access AWS?**
-* **What are they allowed to do?**
+```text
+WHO can access AWS?
+        +
+WHAT are they allowed to do?
+```
+
+These represent two fundamental security concepts:
+
+* **Authentication** — verifying an identity
+* **Authorization** — determining what that identity is permitted to do
 
 ---
 
-## 👥 IAM Users
+# 👤 IAM Users
 
-An **IAM User** represents an identity that can interact with AWS.
+An **IAM User** represents an identity within an AWS account.
+
+A user can be created for a person who requires access to AWS.
 
 An IAM user can have:
 
 * AWS Management Console access
-* Programmatic access
-* Permissions through policies
+* Permissions through IAM policies
 * Membership in IAM groups
+* Programmatic access when required
 
-Instead of using the AWS root account for everyday activities, individual identities should be created with only the permissions they require.
+Example:
+
+```text
+AWS Account
+    │
+    └── IAM
+         │
+         ├── User-A
+         ├── User-B
+         └── User-C
+```
+
+Each person should use their own identity instead of sharing credentials.
 
 ---
 
-## 👨‍👩‍👧‍👦 IAM Groups
+# 👥 IAM Groups
 
 An **IAM Group** is a collection of IAM users.
 
-Instead of assigning the same permissions individually to multiple users, permissions can be attached to a group.
+Groups simplify permission management when multiple users require similar permissions.
 
 Example:
 
 ```text
 Developers
+│
 ├── User-A
 ├── User-B
 └── User-C
 ```
 
-If the `Developers` group receives appropriate permissions, users belonging to the group receive those permissions.
+Instead of assigning the same permissions separately to each developer:
 
-### Important
+```text
+IAM Policy
+    ↓
+Developers Group
+    ↓
+All Developers
+```
 
-IAM groups contain **users**, not other IAM groups.
+Users in the group receive the permissions associated with that group.
+
+> IAM groups contain users. Groups cannot contain other groups.
 
 ---
 
 # 📜 IAM Policies
 
-IAM policies define permissions within AWS.
+IAM policies define permissions in AWS.
 
-Policies specify which actions are:
-
-* Allowed
-* Denied
-
-and the AWS resources to which those permissions apply.
+They specify which actions are **allowed or denied** and which resources those permissions apply to.
 
 IAM policies are written using **JSON**.
 
-Example structure:
+Example:
 
 ```json
 {
@@ -96,46 +128,113 @@ Example structure:
 }
 ```
 
-Important policy elements include:
+## Important Policy Elements
 
-| Element     | Purpose                                                 |
-| ----------- | ------------------------------------------------------- |
-| `Version`   | Policy language version                                 |
-| `Statement` | Contains one or more permission statements              |
-| `Effect`    | Specifies `Allow` or `Deny`                             |
-| `Action`    | AWS API actions affected                                |
-| `Resource`  | Resources to which the statement applies                |
-| `Condition` | Optional conditions controlling when the policy applies |
+| Element     | Purpose                                                |
+| ----------- | ------------------------------------------------------ |
+| `Version`   | Policy language version                                |
+| `Statement` | Contains permission statements                         |
+| `Effect`    | Specifies `Allow` or `Deny`                            |
+| `Action`    | Specifies AWS API actions                              |
+| `Resource`  | Specifies affected AWS resources                       |
+| `Condition` | Optional conditions controlling when permissions apply |
+
+Conceptually:
+
+```text
+IAM Identity
+     ↓
+IAM Policy
+     ↓
+Permission Evaluation
+     ↓
+AWS Resource
+```
 
 ---
 
-# 🛡️ Multi-Factor Authentication (MFA)
+# ⚖️ Principle of Least Privilege
 
-**MFA** adds an additional authentication factor to an AWS account.
+One of the most important IAM security principles is **Least Privilege**.
 
-Instead of relying only on:
+An identity should receive only the permissions necessary to perform its required tasks.
 
-```text
-Username + Password
-```
-
-MFA adds another factor:
+Instead of:
 
 ```text
-Username + Password
-        +
-       MFA
+User
+ ↓
+AdministratorAccess
+ ↓
+Everything
 ```
 
-This provides additional protection if a password becomes compromised.
+prefer:
 
-MFA is particularly important for highly privileged accounts.
+```text
+User
+ ↓
+Required Permissions
+ ↓
+Required Resources
+```
+
+Reducing unnecessary permissions reduces the potential impact of compromised credentials, mistakes, or unauthorized activity.
+
+---
+
+# 🔐 Multi-Factor Authentication (MFA)
+
+**Multi-Factor Authentication (MFA)** adds another authentication factor in addition to a password.
+
+Without MFA:
+
+```text
+Username
+    +
+Password
+```
+
+With MFA:
+
+```text
+Username
+    +
+Password
+    +
+MFA
+```
+
+MFA provides additional protection if a password becomes compromised.
+
+It is especially important for highly privileged identities and the AWS root account.
+
+---
+
+# 👑 AWS Root Account
+
+The **root user** is created when an AWS account is created and has extremely powerful access to the account.
+
+The root account should therefore be strongly protected.
+
+Important practices include:
+
+```text
+AWS Root Account
+       │
+       ├── Enable MFA
+       ├── Protect credentials
+       ├── Avoid everyday use
+       └── Avoid unnecessary access keys
+```
+
+Administrative tasks should generally be performed using appropriately configured identities rather than routinely using the root account.
 
 ---
 
 # 🔑 AWS Access Keys
 
-Access keys are credentials used for **programmatic access to AWS**.
+Access keys can be used for **programmatic access** to AWS.
 
 They consist of:
 
@@ -145,58 +244,104 @@ Access Key ID
 Secret Access Key
 ```
 
-These credentials can be used by tools such as:
+Access keys can be used by tools such as:
 
 * AWS CLI
 * AWS SDKs
+* Applications interacting with AWS APIs
 
-> ⚠️ **Security Warning:** Access keys and secret access keys must never be uploaded to GitHub or exposed publicly.
+Access keys are **sensitive credentials**.
+
+> ⚠️ Access keys and secret access keys must never be exposed publicly or committed to GitHub.
 
 ---
 
 # 💻 AWS CLI
 
-The **AWS Command Line Interface (CLI)** allows AWS services and resources to be accessed and managed from a terminal.
+The **AWS Command Line Interface (CLI)** allows AWS services to be accessed and managed through terminal commands.
 
-Check the installed CLI version:
+Conceptually:
+
+```text
+Terminal
+   ↓
+AWS CLI
+   ↓
+AWS API
+   ↓
+IAM Authorization
+   ↓
+AWS Service
+```
+
+---
+
+## Check AWS CLI Installation
 
 ```bash
 aws --version
 ```
 
-The CLI can be configured with credentials and settings for an AWS environment.
+This verifies that AWS CLI is installed.
 
-Example:
+---
+
+## Configure AWS CLI
+
+AWS CLI can be configured using:
 
 ```bash
 aws configure
 ```
 
-During configuration, information such as credentials, default Region and output format can be configured.
+Configuration can include:
+
+```text
+AWS Access Key ID
+AWS Secret Access Key
+Default Region
+Default Output Format
+```
+
+Actual credential values must never be included in public documentation or repositories.
 
 ---
 
-## CLI Example
-
-A command such as:
+## Example AWS CLI Command
 
 ```bash
 aws iam list-users
 ```
 
-can be used to request information about IAM users when the configured identity has the necessary permission.
+This requests information about IAM users.
 
-This demonstrates an important IAM concept:
+However, the command succeeds only if the identity making the request has permission to perform the corresponding AWS action.
 
-> **Using the CLI does not bypass IAM permissions.**
+---
 
-The identity making the request still needs authorization to perform the requested AWS action.
+# 🛡️ CLI and IAM Permissions
+
+Using the AWS CLI does **not bypass IAM**.
+
+Every AWS CLI request is still subject to authorization.
+
+```text
+CLI Command
+     ↓
+AWS API Request
+     ↓
+IAM Permission Evaluation
+     ↓
+Allowed / Denied
+```
+
+This is an important security concept because AWS access remains controlled regardless of whether resources are accessed through the console, CLI, SDK, or APIs.
 
 ---
 
 # 🧩 AWS SDK
 
-**AWS Software Development Kits (SDKs)** allow applications to interact programmatically with AWS services.
+AWS provides **Software Development Kits (SDKs)** that allow applications to interact programmatically with AWS services.
 
 SDKs are available for multiple programming languages.
 
@@ -207,80 +352,284 @@ Application
      ↓
 AWS SDK
      ↓
-AWS APIs
+AWS API
      ↓
 AWS Services
 ```
 
+Like CLI requests, SDK requests are also subject to AWS authentication and authorization.
+
 ---
 
-# 🔐 Security Connection
+# ☁️ AWS CloudShell
 
-IAM is especially important to my cybersecurity learning because it introduces core security concepts including:
+**AWS CloudShell** provides a browser-based shell that can be accessed from the AWS Management Console.
 
-### Authentication
+It provides a command-line environment for interacting with AWS without requiring a local CLI installation.
 
-Verifying **who an identity is**.
-
-### Authorization
-
-Determining **what an authenticated identity is allowed to do**.
-
-### Principle of Least Privilege
-
-Users and applications should receive only the permissions required to perform their tasks.
+Conceptually:
 
 ```text
-Required Access
-      ↓
-Minimum Permissions
-      ↓
-Reduced Security Risk
+AWS Management Console
+          ↓
+      CloudShell
+          ↓
+       AWS CLI
+          ↓
+      AWS Services
 ```
 
-### Credential Security
-
-Credentials such as passwords and access keys must be protected.
-
-Important practices include:
-
-* Enable MFA
-* Avoid using the root account for everyday activities
-* Never expose secret access keys
-* Never commit credentials to GitHub
-* Avoid hard-coding credentials in applications
-* Grant only required permissions
-* Review permissions regularly
+CloudShell availability can depend on the AWS Region.
 
 ---
 
-# 🧪 Hands-On Practice
+## Local AWS CLI vs CloudShell
 
-During this section, I practiced:
+| AWS CLI                      | AWS CloudShell                              |
+| ---------------------------- | ------------------------------------------- |
+| Runs on the local computer   | Runs in an AWS-managed browser shell        |
+| Requires local installation  | No local installation required              |
+| Requires local configuration | Integrated with the AWS console session     |
+| Useful for local workflows   | Useful for quick browser-based AWS commands |
 
-* Creating IAM users
-* Creating IAM groups
-* Adding users to groups
-* Working with IAM policies
-* Testing permissions
-* Enabling MFA
-* Understanding AWS access keys
-* Installing/configuring AWS CLI
-* Interacting with AWS through CLI commands
+Both approaches remain subject to AWS IAM permissions.
 
-Detailed hands-on documentation is maintained inside the [`labs/`](./labs/) directory.
+---
+
+# 🎭 IAM Roles
+
+An **IAM Role** is an AWS identity with permissions that can be assumed by trusted entities.
+
+Unlike a typical IAM user, a role is not intended to represent one permanent individual identity with long-term credentials.
+
+Roles can be used by:
+
+* AWS services
+* Applications
+* Users
+* Other trusted identities
+
+---
+
+# ⚙️ IAM Roles for AWS Services
+
+AWS services may need permission to interact with other AWS services.
+
+IAM Roles provide a secure mechanism for granting those permissions.
+
+Example:
+
+```text
+EC2 Instance
+     ↓
+IAM Role
+     ↓
+IAM Policy
+     ↓
+S3 Bucket
+```
+
+Instead of storing long-term AWS credentials directly on an EC2 instance, an appropriate IAM role can provide the required permissions.
+
+This is a major security advantage.
+
+---
+
+# 🔑 Users vs Roles
+
+| IAM User                         | IAM Role                             |
+| -------------------------------- | ------------------------------------ |
+| Represents an identity           | Assumable identity                   |
+| Can have long-term credentials   | Commonly uses temporary credentials  |
+| Often associated with a person   | Often used by AWS services/workloads |
+| Has permissions through policies | Has permissions through policies     |
+
+Choosing the appropriate identity type is an important part of secure AWS architecture.
+
+---
+
+# 🛡️ IAM Security Tools
+
+AWS provides IAM-related tools that help review permissions and credentials.
+
+Two important tools introduced in this section are:
+
+## IAM Credentials Report
+
+The **Credentials Report** provides account-level information about IAM users and the status of their credentials.
+
+It can help review information related to:
+
+* Password usage
+* MFA
+* Access keys
+* Credential status
+
+This is useful for security reviews and identifying credentials that may require attention.
+
+---
+
+## IAM Access Advisor
+
+**Access Advisor** provides information about service permissions granted to an identity and when those services were last accessed.
+
+This information can help identify permissions that may no longer be required.
+
+Conceptually:
+
+```text
+Current Permissions
+        ↓
+Access Advisor
+        ↓
+Review Service Usage
+        ↓
+Remove Unnecessary Permissions
+        ↓
+Least Privilege
+```
+
+---
+
+# 🔐 IAM Security Best Practices
+
+Important IAM security practices include:
+
+* Do not routinely use the root account.
+* Protect the root account with MFA.
+* Use individual identities rather than sharing credentials.
+* Use IAM groups where appropriate.
+* Follow the Principle of Least Privilege.
+* Review permissions regularly.
+* Remove unnecessary permissions.
+* Protect passwords and access keys.
+* Never publish AWS credentials.
+* Avoid hard-coding credentials into applications.
+* Prefer IAM roles for AWS services where appropriate.
+* Remove credentials that are no longer required.
+* Use IAM security tools to review credentials and permissions.
+
+---
+
+# 🔒 Cybersecurity Connection
+
+IAM directly connects AWS architecture with several fundamental cybersecurity concepts.
+
+## Authentication
+
+Verifying:
+
+> **Who are you?**
+
+Examples include passwords and MFA.
+
+---
+
+## Authorization
+
+Determining:
+
+> **What are you allowed to do?**
+
+IAM policies are a major mechanism for controlling authorization.
+
+---
+
+## Access Control
+
+```text
+Identity
+    ↓
+Authentication
+    ↓
+IAM Policies / Roles
+    ↓
+Authorization
+    ↓
+AWS Resource
+```
+
+---
+
+## Credential Management
+
+Passwords, access keys, and other credentials must be securely managed.
+
+Compromised credentials can potentially allow unauthorized access according to the permissions associated with the identity.
+
+---
+
+## Least Privilege
+
+Limiting permissions reduces the potential impact of:
+
+* Credential compromise
+* Misconfiguration
+* Human error
+* Unauthorized activity
+* Excessive privileges
+
+---
+
+## Defense in Depth
+
+AWS identity security should not depend on a single control.
+
+For example:
+
+```text
+Strong Authentication
+        +
+       MFA
+        +
+Least Privilege
+        +
+IAM Roles
+        +
+Credential Reviews
+        +
+Monitoring
+```
+
+Together these controls provide stronger protection than relying on passwords alone.
+
+---
+
+# 🧪 Hands-On Labs
+
+Hands-on practice for this section is documented separately inside the [`labs/`](./labs/) directory.
+
+```text
+labs/
+│
+├── 01_IAM_Users_and_Groups.md
+├── 02_IAM_Policies.md
+├── 03_IAM_MFA.md
+├── 04_AWS_CLI.md
+├── 05_AWS_CloudShell.md
+├── 06_IAM_Roles.md
+└── 07_IAM_Security_Tools.md
+```
+
+The labs document the practical work performed while learning each IAM concept.
 
 ---
 
 # 🎯 Key Takeaways
 
-* IAM controls access to AWS resources.
-* IAM users represent individual identities.
+* IAM controls authentication and authorization within AWS.
+* IAM users represent identities within an AWS account.
 * IAM groups simplify permission management for multiple users.
-* IAM policies define permissions.
-* MFA provides an additional layer of account protection.
-* AWS CLI provides command-line access to AWS services.
-* AWS SDKs allow applications to interact with AWS programmatically.
-* AWS CLI requests are still controlled by IAM permissions.
-* Access keys are sensitive credentials and must be protected.
-* IAM permissions should follow the **Principle of Least Privilege**.
+* IAM policies define what actions identities are authorized to perform.
+* Least privilege is a fundamental AWS security principle.
+* MFA provides an additional authentication factor.
+* The root account should be strongly protected and not used for routine tasks.
+* Access keys provide programmatic access and must be treated as sensitive credentials.
+* AWS CLI allows AWS services to be managed through terminal commands.
+* AWS SDKs allow applications to interact programmatically with AWS.
+* AWS CloudShell provides browser-based command-line access to AWS.
+* IAM roles allow trusted entities and AWS services to obtain required permissions without relying on embedded long-term credentials.
+* IAM security tools help review credentials, access, and unnecessary permissions.
+* AWS Console, CLI, SDK, and CloudShell access are all ultimately controlled through AWS identity and authorization mechanisms.
+
+---
